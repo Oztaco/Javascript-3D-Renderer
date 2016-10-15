@@ -651,11 +651,10 @@ scene("intro", {
 		var cube = new model();
 		createCube(cube, 100, 0, 0, 0);
 		models.push(cube);
-		models[0].rotate(0, 30, 0);
-		models[0].applyRotation();
 	},
 	update: function() {
-		
+		models[0].rotate(0, 0.005, 0);
+		models[0].applyRotation();
 	},
 	draw: function() {
 		ctx.fillStyle = "#fff";
@@ -688,20 +687,42 @@ point = function(_x, _y, _z) {
 	this.screenX = this.screenY = 0;
 	this.modX = _x;
 	this.modY = _y;
-	this.modZ = _y;
+	this.modZ = _z;
 	this.pitch = 0;
 	this.yaw = 0;
 	this.roll = 0;
 }
 point.prototype.calcScreenCoords = function() {
-	this.screenX = this.x * (focalLength) / (focalLength + this.z);
-	this.screenY = this.y * (focalLength) / (focalLength + this.z);
+	this.screenX = this.modX * (focalLength) / (focalLength + this.modZ);
+	this.screenY = this.modY * (focalLength) / (focalLength + this.modZ);
 }
-point.prototype.
+point.prototype.rotate = function(pitch, yaw, roll) {
+	this.pitch += pitch;
+	this.yaw += yaw;
+	this.roll += roll;
+}
+point.prototype.applyRotation = function() {
+	// var mag = calcMagnitude(this.x, this.z);
+	// var theta = calcAngle(this.x, this.z);
+	// theta += this.yaw;
+	this.modX = this.x;
+	this.modY = (Math.cos(this.yaw) * this.y) - (Math.sin(this.yaw) * this.z);
+	this.modZ = (Math.sin(this.yaw) * this.y) - (Math.cos(this.yaw) * this.z);
+}
 triangle = function(_a, _b, _c) {
 	this.a = _a;
 	this.b = _b;
 	this.c = _c;
+}
+triangle.prototype.rotate = function(pitch, yaw, roll) {
+	this.a.rotate(pitch, yaw, roll);
+	this.b.rotate(pitch, yaw, roll);
+	this.c.rotate(pitch, yaw, roll);
+}
+triangle.prototype.applyRotation = function() {
+	this.a.applyRotation();
+	this.b.applyRotation();
+	this.c.applyRotation();
 }
 triangle.prototype.calcScreenCoords = function() {
 	this.a.calcScreenCoords();
@@ -729,16 +750,13 @@ model.prototype.draw = function() {
 	}
 }
 model.prototype.rotate = function(pitch, yaw, roll) {
-	this.pitch = pitch;
-	this.yaw = yaw;
-	this.roll = roll;
+	for (var i = 0; i < this.shapes.length; i++) {
+		this.shapes[i].rotate(pitch, yaw, roll);
+	}
 }
 model.prototype.applyRotation = function() {
 	for (var i = 0; i < this.shapes.length; i++) {
-		var mag = calcMagnitude(this.shapes[i].a.x, this.shapes[i].a.y);
-		var theta = calcAngle(this.shapes[i].a.x, this.shapes[i].a.y);
-		var np = getRotatedPoint()
-		console.log(this.shapes[i].a.x + " " + mag + " - " + theta + " deg");
+		this.shapes[i].applyRotation();
 	}
 }
 function calcMagnitude(x, y) {
@@ -746,6 +764,9 @@ function calcMagnitude(x, y) {
 }
 function calcAngle(x, y) {
 	return Math.atan2(x, y);
+}
+function pointFromVector(mag, pitch, yaw, roll) {
+	
 }
 function getRotatedPoint(point, pitch, yaw, roll) {
 
